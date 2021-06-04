@@ -173,12 +173,9 @@ void test5(i32 fd) {
 
   memset(buf,  0, BUFSIZE);
   memset(buf, 88, 900);
-  
   fsWrite(fd, 900, buf);
-
   curs = fsTell(fd);
   checkCursor(5, 10 * 512 + 50 + 900, curs);
-
   fsSeek(fd, 10 * BYTESPERBLOCK, SEEK_SET);     
 
   curs = fsTell(fd);
@@ -186,10 +183,8 @@ void test5(i32 fd) {
 
   i32 ret = fsRead(fd, 2 * BYTESPERBLOCK, buf);
   assert(ret == 2 * BYTESPERBLOCK);
-
   curs = fsTell(fd);
   checkCursor(5, 12 * 512, curs);
-
   check(5, buf, 0,    50, 10);
   check(5, buf, 50,  462, 88);
   check(5, buf, 512, 438, 88);   

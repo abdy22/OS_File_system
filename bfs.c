@@ -257,8 +257,6 @@ i32 bfsInitInodes(FILE* fp) {
   return bioWrite(DBNINODES, buf);
 }
 
-
-
 // ============================================================================
 // Initialize the Open File Table to all zeroes
 // ============================================================================

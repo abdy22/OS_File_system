@@ -83,13 +83,46 @@ i32 fsOpen(str fname) {
 // read (may be less than 'numb' if we hit EOF).  On failure, abort
 // ============================================================================
 i32 fsRead(i32 fd, i32 numb, void* buf) {
+    i32 inum = bfsFdToInum(fd); //inum of the file
+    i32 cursor = bfsTell(fd);  // cursor
+    i32 fbn = cursor / BYTESPERBLOCK;  // fbn to start writing from
+    i32 dbn = bfsFbnToDbn(inum, fbn); // dbn to get data from
+    i8 bioBuf[BYTESPERBLOCK]; // to read data in that DBN
+    char * tempBuf=(char* )buf;  // cast the data from buf to tempBuf
+    int start = cursor - fbn * BYTESPERBLOCK;  // where to start wrting from
+    int count = 0;// keep tracks of reached the numb
 
-  // ++++++++++++++++++++++++
-  // Insert your code here
-  // ++++++++++++++++++++++++
+    int end = BYTESPERBLOCK; //the read buf end = 512
 
-  FATAL(ENYI);                                  // Not Yet Implemented!
-  return 0;
+    int EndOfFile=fsSize(fd); //where the file ends 
+
+    if(numb>(EndOfFile-cursor)) // if no enough bytes to be read
+        numb=EndOfFile-cursor;  
+    int j=0;
+    while(1)
+    {
+       bfsRead(inum,fbn,bioBuf); // fetch data from the dbn
+       int i=start; 
+       for(;i<end;i++) //till the end of bioBuf. break if count reaches numb
+       {
+        if(count==numb)break;
+        tempBuf[j]=bioBuf[i];
+        j++;
+        count++;
+        }
+      if(count<numb) // if there are still number of bytes to be read
+      {
+        start=0;
+        fbn=fbn+1; //swtich to the next fbn
+        dbn=bfsFbnToDbn(inum,fbn); // get the dbn 
+        if(dbn==ENODBN)break; // if dbn does not exit break
+       }
+      else { // if numb of bytes is read, move the cursor to the numb of read
+        bfsSetCursor(inum,count+cursor);
+        break; // stop reading 
+        }
+    }
+    return count;    // number of bytes read
 }
 
 
@@ -158,10 +191,46 @@ i32 fsSize(i32 fd) {
 // ============================================================================
 i32 fsWrite(i32 fd, i32 numb, void* buf) {
 
-  // ++++++++++++++++++++++++
-  // Insert your code here
-  // ++++++++++++++++++++++++
+    i32 inum = bfsFdToInum(fd); //inum of the file
+    i32 cursor = bfsTell(fd);  // cursor
+    i32 fbn = cursor / BYTESPERBLOCK;  // fbn to start writing from
+    i32 dbn = bfsFbnToDbn(inum, fbn); // dbn to get data from
+    i8 bioBuf[BYTESPERBLOCK]; // to read data in that DBN
+    char * tempBuf=(char* )buf;  // cast the data from buf to tempBuf
+    int start = cursor - fbn * BYTESPERBLOCK;  // where to start wrting from
 
-  FATAL(ENYI);                                  // Not Yet Implemented!
-  return 0;
+
+    int count = 0;// keep tracks of reached the numb
+
+    int end = BYTESPERBLOCK; //the read buf end = 512
+    int j=0;  
+    while(1){ // till numb of bytes are writen to bioBuf 
+      bfsRead(inum,fbn,bioBuf); // fetch data from dbn
+      int i=start;
+      for(;i<end;i++) // writes all the way to the end of bioBuf. Breaks if count reaches numb
+      {
+        if(count==numb)break;
+        bioBuf[i]=tempBuf[j];
+        j++;
+        count++;
+      }
+
+     if(count!=numb){ // if numb of bytes are not written 
+       bioWrite(dbn,bioBuf); // update the current fbn
+       start=0; // begining of new fbn bioBuf
+       fbn=fbn+1; // switch to the next fbn
+       dbn=bfsFbnToDbn(inum,fbn);
+       if(dbn==ENODBN){ // if that fbn does  not exist
+        dbn=bfsAllocBlock(inum,fbn); // allocate a block
+        bfsSetSize(inum,fsSize(fd)+(numb-count)); //increase the size to the numb of bytes remaining 
+        }
+       }
+
+      else{ // if numb of bytes is writen 
+        bioWrite(dbn,bioBuf); //update the dbn
+        bfsSetCursor(inum,count+cursor); // move the cursor to the new spot
+        break; //stop write
+      }
+    }
+    return 0; 
 }

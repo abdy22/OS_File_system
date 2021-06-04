@@ -15,7 +15,6 @@ i32 bioRead(i32 dbn, void* buf) {
 
   FILE* fp = fopen(BFSDISK, "rb+");
   if (fp == NULL) FATAL(ENODISK);
-
   i32 boff = dbn * BYTESPERBLOCK;
   i32 ret  = fseek(fp, boff, SEEK_SET);
   if (ret != 0) { fclose(fp); FATAL(ret); }
