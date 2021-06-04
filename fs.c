@@ -85,7 +85,7 @@ i32 fsOpen(str fname) {
 i32 fsRead(i32 fd, i32 numb, void* buf) {
     i32 inum = bfsFdToInum(fd); //inum of the file
     i32 cursor = bfsTell(fd);  // cursor
-    i32 fbn = cursor / BYTESPERBLOCK;  // fbn to start writing from
+    i32 fbn = cursor / BYTESPERBLOCK;  // fbn to start reading from
     i32 dbn = bfsFbnToDbn(inum, fbn); // dbn to get data from
     i8 bioBuf[BYTESPERBLOCK]; // to read data in that DBN
     char * tempBuf=(char* )buf;  // cast the data from buf to tempBuf
